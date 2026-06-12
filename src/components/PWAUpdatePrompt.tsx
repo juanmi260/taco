@@ -1,17 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
-import { Button } from '@/ui/Button';
+
+const UPDATE_CHECK_INTERVAL_MS = 60 * 60 * 1000;
 
 export function PWAUpdatePrompt() {
   const {
-    needRefresh: [needRefresh, setNeedRefresh],
     offlineReady: [offlineReady, setOfflineReady],
-    updateServiceWorker,
   } = useRegisterSW({
-    onRegisteredSW(swUrl) {
+    onRegisteredSW(swUrl, registration) {
       if (import.meta.env.DEV) {
         console.info('[PWA] SW registered:', swUrl);
       }
+      if (!registration) return;
+      const id = window.setInterval(() => {
+        if (!navigator.onLine) return;
+        registration.update().catch((e) => console.warn('[PWA] update check failed', e));
+      }, UPDATE_CHECK_INTERVAL_MS);
+      return () => window.clearInterval(id);
     },
     onRegisterError(error) {
       console.warn('[PWA] SW registration error:', error);
@@ -31,14 +36,6 @@ export function PWAUpdatePrompt() {
     };
   }, []);
 
-  function dismissOfflineReady() {
-    setOfflineReady(false);
-  }
-
-  function applyUpdate() {
-    updateServiceWorker(true);
-  }
-
   return (
     <>
       {!online && (
@@ -47,29 +44,7 @@ export function PWAUpdatePrompt() {
         </div>
       )}
 
-      {needRefresh && (
-        <div
-          role="alertdialog"
-          aria-label="Nueva versión disponible"
-          className="fixed inset-x-0 bottom-20 z-50 mx-auto max-w-md px-4"
-        >
-          <div className="rounded-2xl border border-emerald-200 bg-white p-3 shadow-lg dark:border-emerald-900/50 dark:bg-slate-800">
-            <p className="text-sm text-slate-800 dark:text-slate-100">
-              Nueva versión disponible.
-            </p>
-            <div className="mt-2 flex gap-2">
-              <Button variant="secondary" onClick={() => setNeedRefresh(false)}>
-                Después
-              </Button>
-              <Button variant="primary" onClick={applyUpdate}>
-                Actualizar
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {offlineReady && !needRefresh && (
+      {offlineReady && (
         <div
           role="status"
           className="fixed inset-x-0 bottom-20 z-50 mx-auto max-w-md px-4"
@@ -78,7 +53,7 @@ export function PWAUpdatePrompt() {
             <span>Listo para funcionar sin conexión.</span>
             <button
               type="button"
-              onClick={dismissOfflineReady}
+              onClick={() => setOfflineReady(false)}
               className="ml-2 underline"
               aria-label="Cerrar aviso"
             >
