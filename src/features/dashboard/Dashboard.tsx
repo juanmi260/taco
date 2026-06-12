@@ -30,7 +30,7 @@ export function Dashboard() {
   }
 
   return (
-    <div className="mx-auto flex min-h-svh max-w-xl flex-col gap-5 px-4 pb-28 pt-4">
+    <div className="mx-auto flex min-h-svh max-w-xl flex-col gap-5 px-4 pb-20 pt-4">
       <header className="flex items-baseline justify-between text-sm text-slate-500">
         <span className="font-mono tabular-nums">{formatClock(now)}</span>
         <span>{formatDateLong(now)}</span>
@@ -56,9 +56,7 @@ export function Dashboard() {
         )}
       </main>
 
-      <div className="fixed inset-x-0 bottom-16 mx-auto max-w-xl px-4">
-        <BigActionButton state={openLog ? 'open' : 'closed'} onClick={onAction} />
-      </div>
+      <BigActionButton state={openLog ? 'open' : 'closed'} onClick={onAction} />
 
       {openLog && (
         <CloseSheet
